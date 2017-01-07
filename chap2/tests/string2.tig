@@ -1,0 +1,21 @@
+let
+  val a = "\n"
+  val b = "\t"
+  val c = "\^A"
+  val d = "\065"
+  val e = "\005"
+  val f = "\097"
+  val g = "\""
+  val h = "\\"
+  val i = "i"
+  val k = "hello world!"
+  val l = "I am a \
+          \multiline string!"
+  val l = "I am a multiline string \
+           \with a lot \\ \" \122 \^C of escapes!"
+  val m = "I have \
+          \three \
+          \lines!"
+in
+  ()
+end

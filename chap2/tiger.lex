@@ -7,6 +7,9 @@ fun err(p1,p2) = ErrorMsg.error p1
 
 val commentLevel = ref 0
 
+val stringBuffer : (char list) ref = ref nil
+val stringStartPos = ref 0
+
 fun eof() =
   let
     val pos = hd(!linePos)
@@ -31,15 +34,15 @@ fun parseInt s =
 
 %%
 
-%s COMMENT;
+%s COMMENT STRING;
 alpha=[A-Za-z];
 digit=[0-9];
 ws = [\ \t];
 
 %%
 
-\n    => (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
-{ws}+ => (lex());
+<INITIAL>\n    => (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
+<INITIAL>{ws}+ => (lex());
 
 <INITIAL>"while"    => (Tokens.WHILE(yypos,yypos+5));
 <INITIAL>"for"      => (Tokens.FOR(yypos,yypos+3));
@@ -96,6 +99,30 @@ ws = [\ \t];
 <INITIAL>{digit}+ => (Tokens.INT(parseInt(yytext), yypos, yypos + (size yytext)));
 
 <INITIAL>{alpha}({alpha}|{digit}|_)* => (Tokens.ID(yytext, yypos, yypos + (size yytext)));
+
+<INITIAL>\"    => (YYBEGIN STRING;
+                   stringStartPos := yypos;
+                   stringBuffer := nil; continue());
+<STRING>\"     => (YYBEGIN INITIAL;
+                   Tokens.STRING(implode (rev (!stringBuffer)), !stringStartPos, yypos+ 1));
+
+<STRING>\\n               => (stringBuffer := #"\n"::(!stringBuffer); continue());
+<STRING>\\t               => (stringBuffer := #"\t"::(!stringBuffer); continue());
+<STRING>\\\^[@-_]         => (let val n : int = ord (List.nth (explode yytext, 2))
+                                  val c = chr (n - 64)
+                              in
+                                stringBuffer := c::(!stringBuffer)
+                              end; continue());
+<STRING>\\[0-9]{3}        => (let val n = valOf (Int.fromString (implode (List.drop (explode yytext, 1))))
+                                  val c = chr n
+                              in
+                                stringBuffer := c::(!stringBuffer)
+                              end; continue());
+<STRING>\\\"              => (stringBuffer := #"\""::(!stringBuffer); continue());
+<STRING>\\\\              => (stringBuffer := #"\\"::(!stringBuffer); continue());
+<STRING>\\[\ \n\t\f\r]+\\ => (continue());
+<STRING>.                 => (stringBuffer := (List.nth (explode yytext, 0))::(!stringBuffer);
+                              continue());
 
 
 .     => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
