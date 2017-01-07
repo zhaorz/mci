@@ -17,6 +17,18 @@ fun eof() =
     Tokens.EOF(pos,pos)
   end
 
+fun parseInt s =
+  let
+    val pos = hd(!linePos)
+    val x = Int.fromString s
+            handle Overflow =>
+                   (ErrorMsg.error pos ("integer literal too large: " ^ s); SOME ~1)
+                 | _ =>
+                   (ErrorMsg.error pos ("cannot parse integer: " ^ s); SOME ~1)
+  in
+    valOf x
+  end
+
 %%
 
 %s COMMENT;
@@ -80,6 +92,10 @@ ws = [\ \t];
 <COMMENT>"*/"  => (commentLevel := !commentLevel - 1;
                    if !commentLevel = 0 then YYBEGIN INITIAL else (); continue());
 <COMMENT>.     => (continue());
+
+<INITIAL>{digit}+ => (Tokens.INT(parseInt(yytext), yypos, yypos + (size yytext)));
+
+<INITIAL>{alpha}|({alpha}|{digit}|_)+ => (Tokens.ID(yytext, yypos, yypos + (size yytext)));
 
 
 .     => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
