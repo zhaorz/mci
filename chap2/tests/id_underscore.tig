@@ -1,0 +1,8 @@
+let
+  val a = 12
+  val b = 34
+  val _c = 45 /* uh oh */
+  val d_e = 12345
+in
+  a + b
+end

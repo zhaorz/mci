@@ -95,7 +95,7 @@ ws = [\ \t];
 
 <INITIAL>{digit}+ => (Tokens.INT(parseInt(yytext), yypos, yypos + (size yytext)));
 
-<INITIAL>{alpha}|({alpha}|{digit}|_)+ => (Tokens.ID(yytext, yypos, yypos + (size yytext)));
+<INITIAL>{alpha}({alpha}|{digit}|_)* => (Tokens.ID(yytext, yypos, yypos + (size yytext)));
 
 
 .     => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
