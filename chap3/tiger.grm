@@ -21,7 +21,7 @@
         | record_creation | field | field_list | array_creation
         | assign_exp
 
-
+%nonassoc ASSIGN
 %left AND OR
 %nonassoc EQ NEQ LT LE GT GE
 %left PLUS MINUS
@@ -84,6 +84,7 @@ fundec : FUNCTION ID LPAREN tyfields RPAREN EQ exp          ()
 
 lvalue : ID                       ()
        | lvalue DOT ID            ()
+       | ID LBRACK exp RBRACK     () (* redundant case *)
        | lvalue LBRACK exp RBRACK ()
 
 (* ------------------------------------------------------------------------ *)
