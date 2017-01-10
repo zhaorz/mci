@@ -1,0 +1,8 @@
+(person { name = "Bob",
+          age  = 71 - 15,
+          height = 180
+        };
+ car { owner = "Bob",
+       model = "Forrester",
+       age   = 2017 - 1999
+     })

@@ -17,8 +17,15 @@
         | ty | tyfield | tyfields | tyfields_list
         | lvalue
         | expseq | explist | args
-        | arith_exp
+        | arith_exp | cmp_exp | bool_exp
+        | record_creation | field | field_list | array_creation
+        | assign_exp
 
+
+%left AND OR
+%nonassoc EQ NEQ LT LE GT GE
+%left PLUS MINUS
+%left TIMES DIVIDE
 %left UMINUS
 
 %pos int
@@ -91,11 +98,43 @@ exp : lvalue                                ()
     | MINUS exp                %prec UMINUS ()
     | ID LPAREN args RPAREN                 () (* function call *)
     | arith_exp                             ()
+    | cmp_exp                               ()
+    | bool_exp                              ()
+    | record_creation                       ()
+    | array_creation                        ()
+    | assign_exp                            ()
+    | IF exp THEN exp ELSE exp              ()
+    | IF exp THEN exp                       ()
+    | WHILE exp DO exp                      ()
+    | FOR ID ASSIGN exp TO exp DO exp       ()
+    | BREAK                                 ()
+    | LET decs IN expseq END                ()
 
-arith_exp : exp PLUS exp ()
-          | exp MINUS exp ()
-          | exp TIMES exp ()
+arith_exp : exp PLUS exp   ()
+          | exp MINUS exp  ()
+          | exp TIMES exp  ()
           | exp DIVIDE exp ()
+
+cmp_exp : exp EQ exp  ()
+        | exp NEQ exp ()
+        | exp LT exp  ()
+        | exp LE exp  ()
+        | exp GE exp  ()
+        | exp GT exp  ()
+
+bool_exp : exp AND exp  ()
+         | exp OR exp   ()
+
+record_creation : ID LBRACE field_list RBRACE ()
+
+field : ID EQ exp                             ()
+
+field_list : field                            ()
+           | field_list COMMA field           ()
+
+array_creation : ID LBRACK exp RBRACK OF exp  ()
+
+assign_exp : lvalue ASSIGN exp ()
 
 args : ()
      | explist ()
