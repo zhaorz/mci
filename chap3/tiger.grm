@@ -18,7 +18,7 @@
         | lvalue
         | expseq | explist | args
         | arith_exp | cmp_exp | bool_exp
-        | record_creation | field | field_list | array_creation
+        | record_creation | field | field_list | field_list_nonempty | array_creation
         | assign_exp
 
 %pos int
@@ -154,8 +154,12 @@ field
     : ID EQ exp                             ()
 
 field_list
+    :                                       ()
+    | field_list_nonempty                   ()
+
+field_list_nonempty
     : field                                 ()
-    | field_list COMMA field                ()
+    | field_list_nonempty COMMA field       ()
 
 array_creation
     : ID LBRACK exp RBRACK OF exp           ()
