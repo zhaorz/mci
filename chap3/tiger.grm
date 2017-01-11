@@ -21,13 +21,6 @@
         | record_creation | field | field_list | array_creation
         | assign_exp
 
-%nonassoc ASSIGN
-%left AND OR
-%nonassoc EQ NEQ LT LE GT GE
-%left PLUS MINUS
-%left TIMES DIVIDE
-%left UMINUS
-
 %pos int
 %verbose
 %start program
@@ -44,6 +37,19 @@
 %value ID ("bogus")
 %value INT (1)
 %value STRING ("")
+
+%nonassoc ASSIGN
+%left AND OR
+%nonassoc EQ NEQ LT LE GT GE
+%left PLUS MINUS
+%left TIMES DIVIDE
+%left UMINUS
+%right DO ELSE                (* For dangling ELSE and DO blocks *)
+%right OF                     (* For array creation
+                               * e.g. var A = arr_t[n] of x * y
+                               *                           ^
+                               * The correct behavior shifts (don't reduce at x)
+                               *)
 
 %%
 
