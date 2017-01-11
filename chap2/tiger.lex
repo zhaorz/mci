@@ -7,6 +7,7 @@ type pos = int
 type ('a, 'b) token = ('a, 'b) Tokens.token
 type lexresult = (svalue, pos) token
 
+(* Begin declarations *)
 val lineNum = ErrorMsg.lineNum
 val linePos = ErrorMsg.linePos
 fun err(p1,p2) = ErrorMsg.error p1
@@ -102,11 +103,14 @@ ws = [\ \t];
 <INITIAL>","    => (Tokens.COMMA(yypos,yypos+1));
 
 <INITIAL>"/*"    => (YYBEGIN COMMENT;
-                   inc commentLevel; continue());
-<COMMENT>"/*"    => (inc commentLevel; continue());
+                     inc commentLevel;
+                     continue());
+<COMMENT>"/*"    => (inc commentLevel;
+                     continue());
 <COMMENT>"*/"    => (dec commentLevel;
-                   if !commentLevel = 0 then YYBEGIN INITIAL else (); continue());
-<COMMENT>[^"*/"] => (continue());
+                     if !commentLevel = 0 then YYBEGIN INITIAL else ();
+                     continue());
+<COMMENT>(.|\n)  => (continue());
 
 <INITIAL>{digit}+ => (Tokens.INT(parseInt(yytext), yypos, yypos + (size yytext)));
 
@@ -137,4 +141,4 @@ ws = [\ \t];
                               continue());
 
 
-.     => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
+<INITIAL>.     => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
