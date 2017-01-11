@@ -1,6 +1,6 @@
 Group is
 
-tiger.lex
+tiger.lex.sml
 errormsg.sml
 parsetest.sml
 tiger.grm
