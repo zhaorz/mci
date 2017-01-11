@@ -1,4 +1,7 @@
 (* For parser interface *)
+(* type pos = int *)
+(* type lexresult = Tokens.token *)
+
 type svalue = Tokens.svalue
 type pos = int
 type ('a, 'b) token = ('a, 'b) Tokens.token
@@ -12,6 +15,10 @@ val commentLevel = ref 0
 
 val stringBuffer : (char list) ref = ref nil
 val stringStartPos = ref 0
+
+fun inc (r : int ref) : unit = r := !r + 1
+
+fun dec (r : int ref) : unit = r := !r - 1
 
 fun eof() =
   let
@@ -46,7 +53,7 @@ ws = [\ \t];
 
 %%
 
-<INITIAL>\n    => (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
+<INITIAL>\n    => (inc lineNum; linePos := yypos :: !linePos; continue());
 <INITIAL>{ws}+ => (lex());
 
 <INITIAL>"while"    => (Tokens.WHILE(yypos,yypos+5));
@@ -94,12 +101,12 @@ ws = [\ \t];
 <INITIAL>":"    => (Tokens.COLON(yypos,yypos+1));
 <INITIAL>","    => (Tokens.COMMA(yypos,yypos+1));
 
-<INITIAL>"/*"  => (YYBEGIN COMMENT;
-                   commentLevel := !commentLevel + 1; continue());
-<COMMENT>"/*"  => (commentLevel := !commentLevel + 1; continue());
-<COMMENT>"*/"  => (commentLevel := !commentLevel - 1;
+<INITIAL>"/*"    => (YYBEGIN COMMENT;
+                   inc commentLevel; continue());
+<COMMENT>"/*"    => (inc commentLevel; continue());
+<COMMENT>"*/"    => (dec commentLevel;
                    if !commentLevel = 0 then YYBEGIN INITIAL else (); continue());
-<COMMENT>.     => (continue());
+<COMMENT>[^"*/"] => (continue());
 
 <INITIAL>{digit}+ => (Tokens.INT(parseInt(yytext), yypos, yypos + (size yytext)));
 
