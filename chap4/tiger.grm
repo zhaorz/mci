@@ -1,0 +1,182 @@
+structure A = Absyn
+
+%%
+%term
+    EOF
+  | ID of string
+  | INT of int | STRING of string
+  | COMMA | COLON | SEMICOLON | LPAREN | RPAREN | LBRACK | RBRACK
+  | LBRACE | RBRACE | DOT
+  | PLUS | MINUS | UMINUS | TIMES | DIVIDE | EQ | NEQ | LT | LE | GT | GE
+  | AND | OR | ASSIGN
+  | ARRAY | IF | THEN | ELSE | WHILE | FOR | TO | DO | LET | IN | END | OF
+  | BREAK | NIL
+  | FUNCTION | VAR | TYPE
+
+%nonterm  exp | program
+        | decs | dec
+        | tydec | vardec | fundec
+        | ty | tyfield | tyfields | tyfields_list
+        | lvalue
+        | expseq | explist | args
+        | arith_exp | cmp_exp | bool_exp
+        | record_creation | field | field_list | field_list_nonempty | array_creation
+        | assign_exp
+
+%pos int
+%verbose
+%start program
+%eop EOF
+%noshift EOF
+
+%name Tiger
+
+%keyword WHILE FOR TO BREAK LET IN END FUNCTION VAR TYPE ARRAY IF THEN ELSE
+	DO OF NIL
+
+%prefer THEN ELSE LPAREN
+
+%value ID ("bogus")
+%value INT (1)
+%value STRING ("")
+
+%nonassoc ASSIGN
+%left AND OR
+%nonassoc EQ NEQ LT LE GT GE
+%left PLUS MINUS
+%left TIMES DIVIDE
+%left UMINUS
+%right DO THEN ELSE           (* For dangling ELSE and DO blocks *)
+%right OF                     (* For array creation
+                               * e.g. var A = arr_t[n] of x * y
+                               *                           ^
+                               * The correct behavior shifts (don't reduce at x)
+                               *)
+
+%%
+
+program	: exp	()
+
+(* ------------------------------------------------------------------------ *)
+(* Declarations *)
+
+decs
+    :                                                    ()
+    | decs dec                                           ()
+
+dec
+    : tydec                                              ()
+    | vardec                                             ()
+    | fundec                                             ()
+
+tydec
+    : TYPE ID EQ ty                                      ()
+
+ty
+    : ID                                                 ()
+    | LBRACE tyfields RBRACE                             ()
+    | ARRAY OF ID                                        ()
+
+tyfield
+    : ID COLON ID                                        ()
+
+tyfields
+    :                                                    ()
+    | tyfields_list                                      ()
+
+tyfields_list
+    : tyfield                                            ()
+    | tyfields_list COMMA tyfield                        ()
+
+vardec
+    : VAR ID ASSIGN exp                                  ()
+    | VAR ID COLON ID ASSIGN exp                         ()
+
+fundec
+    : FUNCTION ID LPAREN tyfields RPAREN EQ exp          ()
+    | FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp ()
+
+(* ------------------------------------------------------------------------ *)
+(* Variables *)
+
+lvalue
+    : ID                       ()
+    | lvalue DOT ID            ()
+    | ID LBRACK exp RBRACK     () (* redundant case *)
+    | lvalue LBRACK exp RBRACK ()
+
+(* ------------------------------------------------------------------------ *)
+(* Expressions *)
+
+exp
+    : lvalue                                ()
+    | NIL                                   ()
+    | LPAREN RPAREN                         ()
+    | LPAREN expseq RPAREN                  ()
+    | INT                                   ()
+    | STRING                                ()
+    | MINUS exp                %prec UMINUS ()
+    | ID LPAREN args RPAREN                 () (* function call *)
+    | arith_exp                             ()
+    | cmp_exp                               ()
+    | bool_exp                              ()
+    | record_creation                       ()
+    | array_creation                        ()
+    | assign_exp                            ()
+    | IF exp THEN exp ELSE exp              ()
+    | IF exp THEN exp                       ()
+    | WHILE exp DO exp                      ()
+    | FOR ID ASSIGN exp TO exp DO exp       ()
+    | BREAK                                 ()
+    | LET decs IN expseq END                ()
+    | LET decs IN END                       ()
+
+arith_exp
+    : exp PLUS exp                          ()
+    | exp MINUS exp                         ()
+    | exp TIMES exp                         ()
+    | exp DIVIDE exp                        ()
+
+cmp_exp
+    : exp EQ exp                            ()
+    | exp NEQ exp                           ()
+    | exp LT exp                            ()
+    | exp LE exp                            ()
+    | exp GE exp                            ()
+    | exp GT exp                            ()
+
+bool_exp
+    : exp AND exp                           ()
+    | exp OR exp                            ()
+
+record_creation
+    : ID LBRACE field_list RBRACE           ()
+
+field
+    : ID EQ exp                             ()
+
+field_list
+    :                                       ()
+    | field_list_nonempty                   ()
+
+field_list_nonempty
+    : field                                 ()
+    | field_list_nonempty COMMA field       ()
+
+array_creation
+    : ID LBRACK exp RBRACK OF exp           ()
+
+assign_exp
+    : lvalue ASSIGN exp                     ()
+
+args
+    :                                       ()
+    | explist                               ()
+
+expseq
+    : exp                                   ()
+    | expseq SEMICOLON exp                  ()
+
+explist
+    : exp                                   ()
+    | explist COMMA exp                     ()
