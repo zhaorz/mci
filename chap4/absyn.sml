@@ -31,7 +31,7 @@ datatype var = SimpleVar of symbol * pos
                           typ: (symbol * pos) option,
                           init: exp,
                           pos: pos}
-             | TypeDec of {name: symbol, ty: ty, pos: pos} list
+             | TypeDec of tydec list
 
      and ty = NameTy of symbol * pos
             | RecordTy of field list
@@ -42,10 +42,13 @@ datatype var = SimpleVar of symbol * pos
 
 withtype field = {name: symbol, escape: bool ref,
                   typ: symbol, pos: pos}
-     and   fundec = {name: symbol,
-                     params: field list,
-                     result: (symbol * pos) option,
-		                 body: exp,
-		                 pos: pos}
+     and fundec = {name: symbol,
+                   params: field list,
+                   result: (symbol * pos) option,
+                   body: exp,
+                   pos: pos}
+     and tydec = {name: symbol,
+                  ty: ty,
+                  pos: pos}
 
 end
