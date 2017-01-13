@@ -26,7 +26,12 @@ fun negative (exp : A.exp, pos : int) : A.exp =
         (* | tyfields of A.field list | tyfields_list of A.field list *)
         (* | lvalue of A.exp *)
         | arith_exp of A.exp | cmp_exp of A.exp | bool_exp of A.exp
-        (* | record_creation | field | field_list | field_list_nonempty | array_creation *)
+
+        | record_creation of A.exp | field of (S.symbol * A.exp * A.pos)
+        | field_list of (S.symbol * A.exp * A.pos) list
+        | field_list_nonempty of (S.symbol * A.exp * A.pos) list
+
+        | array_creation of A.exp
         (* | assign_exp *)
 
 %pos int
@@ -130,8 +135,8 @@ exp
     | arith_exp                             (arith_exp)
     | cmp_exp                               (cmp_exp)
     | bool_exp                              (bool_exp)
-    (* | record_creation                       () *)
-    (* | array_creation                        () *)
+    | record_creation                       (record_creation)
+    | array_creation                        (array_creation)
     (* | assign_exp                            () *)
     | IF exp THEN exp ELSE exp              (A.IfExp {
                                                   test = exp1,
@@ -184,22 +189,29 @@ bool_exp
                                                   else' = SOME exp2,
                                                   pos = ORleft})
 
-(* record_creation *)
-(*     : ID LBRACE field_list RBRACE           () *)
+record_creation
+    : ID LBRACE field_list RBRACE      (A.RecordExp {
+                                             fields = field_list,
+                                             typ = S.symbol ID,
+                                             pos = IDleft })
 
-(* field *)
-(*     : ID EQ exp                             () *)
+field
+    : ID EQ exp                        ((S.symbol ID, exp, IDleft))
 
-(* field_list *)
-(*     :                                       () *)
-(*     | field_list_nonempty                   () *)
+field_list
+    :                                  ([])
+    | field_list_nonempty              (field_list_nonempty)
 
-(* field_list_nonempty *)
-(*     : field                                 () *)
-(*     | field_list_nonempty COMMA field       () *)
+field_list_nonempty
+    : field                            ([field])
+    | field_list_nonempty COMMA field  (field_list_nonempty @ [field])
 
-(* array_creation *)
-(*     : ID LBRACK exp RBRACK OF exp           () *)
+array_creation
+      : ID LBRACK exp RBRACK OF exp           (A.ArrayExp {
+                                                    typ = S.symbol ID,
+                                                    size = exp1,
+                                                    init = exp2,
+                                                    pos = IDleft })
 
 (* assign_exp *)
 (*     : lvalue ASSIGN exp                     () *)
